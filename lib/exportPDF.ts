@@ -1,0 +1,191 @@
+import type { Roadmap } from '@/types';
+
+export function exportToPDF(roadmap: Roadmap, profileData?: never) {
+    // Create a printable HTML version
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AI Career Roadmap</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1 { color: #1e40af; margin-bottom: 10px; font-size: 32px; }
+    .summary { 
+      background: #eff6ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 16px;
+    }
+    .meta {
+      display: flex;
+      gap: 30px;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+    .meta-item strong { display: block; color: #6b7280; font-size: 14px; }
+    .meta-item span { font-size: 24px; font-weight: bold; color: #1e40af; }
+    .phases {
+      margin: 30px 0;
+      page-break-inside: avoid;
+    }
+    .phase {
+      border-left: 4px solid #3b82f6;
+      padding-left: 15px;
+      margin: 15px 0;
+    }
+    .phase h3 { color: #1e40af; font-size: 18px; }
+    .phase .duration { color: #6b7280; font-size: 14px; }
+    .items { margin-top: 30px; }
+    .item {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      page-break-inside: avoid;
+    }
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .item h3 { color: #1e40af; font-size: 18px; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge.foundation { background: #dbeafe; color: #1e40af; }
+    .badge.technical { background: #f3e8ff; color: #7c3aed; }
+    .badge.practical { background: #dcfce7; color: #16a34a; }
+    .badge.career { background: #fed7aa; color: #ea580c; }
+    .badge.high { background: #fee2e2; color: #dc2626; }
+    .badge.medium { background: #fef3c7; color: #d97706; }
+    .badge.low { background: #f3f4f6; color: #6b7280; }
+    .item-description { 
+      color: #4b5563;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    .resources {
+      margin-top: 15px;
+    }
+    .resources h4 {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    .resource {
+      margin: 5px 0;
+      padding-left: 15px;
+      font-size: 13px;
+    }
+    .resource a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #e5e7eb;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    @media print {
+      body { padding: 20px; }
+      .item { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Your AI Career Transition Roadmap</h1>
+  
+  <div class="summary">
+    ${roadmap.summary}
+  </div>
+
+  <div class="meta">
+    <div class="meta-item">
+      <strong>Total Items</strong>
+      <span>${roadmap.items.length}</span>
+    </div>
+    <div class="meta-item">
+      <strong>Timeline</strong>
+      <span>${roadmap.totalWeeks} weeks</span>
+    </div>
+    <div class="meta-item">
+      <strong>Estimated Duration</strong>
+      <span>~${Math.round(roadmap.totalWeeks / 4)} months</span>
+    </div>
+  </div>
+
+  <div class="phases">
+    <h2 style="margin-bottom: 15px; color: #1e40af;">Journey Phases</h2>
+    ${roadmap.phases.map(phase => `
+      <div class="phase">
+        <h3>${phase.name}</h3>
+        <div class="duration">${phase.duration}</div>
+        <p>${phase.focus}</p>
+      </div>
+    `).join('')}
+  </div>
+
+  <div class="items">
+    <h2 style="margin-bottom: 20px; color: #1e40af;">Learning Items</h2>
+    ${roadmap.items.map(item => `
+      <div class="item">
+        <div class="item-header">
+          <h3>${item.title}</h3>
+          <span class="badge ${item.category}">${item.category}</span>
+          <span class="badge ${item.priority}">${item.priority} priority</span>
+          <span class="badge" style="background: #f3f4f6; color: #6b7280;">${item.estimatedWeeks} weeks</span>
+        </div>
+        <div class="item-description">${item.description}</div>
+        <div class="resources">
+          <h4>📚 Resources:</h4>
+          ${item.resources.map(resource => `
+            <div class="resource">
+              • <a href="${resource.url}" target="_blank">${resource.title}</a>
+              ${resource.free ? '<span style="color: #16a34a;"> (Free)</span>' : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+  </div>
+
+  <div class="footer">
+    <p>Generated by AI Career Coach • ${new Date().toLocaleDateString()}</p>
+    <p style="margin-top: 5px;">Save this roadmap and track your progress at: 
+      <a href="${window.location.origin}" style="color: #2563eb;">${window.location.origin}</a>
+    </p>
+  </div>
+</body>
+</html>
+  `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Wait for content to load, then trigger print
+    setTimeout(() => {
+        printWindow.print();
+    }, 250);
+}

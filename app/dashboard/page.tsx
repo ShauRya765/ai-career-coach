@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Roadmap, RoadmapItem } from '@/types';
+import type { Roadmap } from '@/types';
 import RoadmapCard from '@/components/dashboard/RoadmapCard';
 import ProgressOverview from '@/components/dashboard/ProgressOverview';
 import ShareButton from '@/components/dashboard/ShareButton';
@@ -14,7 +14,7 @@ import { Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportToPDF } from '@/lib/exportPDF';
 
-export default function DashboardPage() {
+function DashboardContent() {
     const searchParams = useSearchParams();
     const roadmapId = searchParams.get('roadmapId');
 
@@ -25,7 +25,10 @@ export default function DashboardPage() {
     useEffect(() => {
         if (roadmapId) {
             loadRoadmap(roadmapId);
+        } else {
+            setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roadmapId]);
 
     async function loadRoadmap(id: string) {
@@ -122,9 +125,7 @@ export default function DashboardPage() {
                 <Card className="max-w-md">
                     <CardHeader>
                         <CardTitle>Roadmap Not Found</CardTitle>
-                        <CardDescription>
-                            {`We couldn't find the roadmap you're looking for.`}
-                        </CardDescription>
+                        <CardDescription>{`We couldn't find the roadmap you're looking for.`}</CardDescription>
                     </CardHeader>
                 </Card>
             </div>
@@ -141,7 +142,6 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">
             <div className="container mx-auto max-w-6xl">
-                {/* Header with Share/Export */}
                 <div className="mb-8">
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -158,14 +158,12 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Progress Overview */}
                 <ProgressOverview
                     totalItems={roadmap.items.length}
                     completedItems={completedItems.length}
                     totalWeeks={roadmap.totalWeeks}
                 />
 
-                {/* Phases Overview */}
                 <Card className="mb-6">
                     <CardHeader>
                         <CardTitle>Your Journey Phases</CardTitle>
@@ -183,33 +181,18 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Roadmap Items by Category */}
                 <Tabs defaultValue="all" className="w-full">
                     <TabsList className="grid w-full grid-cols-5">
-                        <TabsTrigger value="all">
-                            All ({roadmap.items.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="foundation">
-                            Foundation ({itemsByCategory.foundation.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="technical">
-                            Technical ({itemsByCategory.technical.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="practical">
-                            Practical ({itemsByCategory.practical.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="career">
-                            Career ({itemsByCategory.career.length})
-                        </TabsTrigger>
+                        <TabsTrigger value="all">All ({roadmap.items.length})</TabsTrigger>
+                        <TabsTrigger value="foundation">Foundation ({itemsByCategory.foundation.length})</TabsTrigger>
+                        <TabsTrigger value="technical">Technical ({itemsByCategory.technical.length})</TabsTrigger>
+                        <TabsTrigger value="practical">Practical ({itemsByCategory.practical.length})</TabsTrigger>
+                        <TabsTrigger value="career">Career ({itemsByCategory.career.length})</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="all" className="space-y-4 mt-6">
                         {roadmap.items.map((item) => (
-                            <RoadmapCard
-                                key={item.id}
-                                item={item}
-                                onToggleComplete={toggleItemComplete}
-                            />
+                            <RoadmapCard key={item.id} item={item} onToggleComplete={toggleItemComplete} />
                         ))}
                     </TabsContent>
 
@@ -217,11 +200,7 @@ export default function DashboardPage() {
                         <TabsContent key={category} value={category} className="space-y-4 mt-6">
                             {items.length > 0 ? (
                                 items.map((item) => (
-                                    <RoadmapCard
-                                        key={item.id}
-                                        item={item}
-                                        onToggleComplete={toggleItemComplete}
-                                    />
+                                    <RoadmapCard key={item.id} item={item} onToggleComplete={toggleItemComplete} />
                                 ))
                             ) : (
                                 <Card>
@@ -235,5 +214,19 @@ export default function DashboardPage() {
                 </Tabs>
             </div>
         </div>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+            }
+        >
+            <DashboardContent />
+        </Suspense>
     );
 }
